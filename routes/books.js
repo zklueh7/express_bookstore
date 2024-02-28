@@ -1,7 +1,9 @@
 const express = require("express");
-const Book = require("../models/book");
-
 const router = new express.Router();
+
+const Book = require("../models/book");
+const { validate } = require("jsonschema");
+const bookSchema = require("../schemas/bookSchema");
 
 
 /** GET / => {books: [book, ...]}  */
@@ -30,9 +32,19 @@ router.get("/:id", async function (req, res, next) {
 
 router.post("/", async function (req, res, next) {
   try {
+    const result = validate(req.body, bookSchema);
+
+    if (!result.valid) {
+      return next({
+        status: 400,
+        error: validation.errors.map(e => e.stack)
+      });
+    }
     const book = await Book.create(req.body);
     return res.status(201).json({ book });
-  } catch (err) {
+  }
+
+  catch (err) {
     return next(err);
   }
 });
